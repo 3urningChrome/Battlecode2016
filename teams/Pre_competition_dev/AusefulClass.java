@@ -16,10 +16,7 @@ public class AusefulClass {
 	
 	static RobotType my_type;
 	static int byte_code_limiter;
-	
-	public AusefulClass(){
-	}
-	
+		
 	public static void init(RobotController the_rc) {
 		rc = the_rc;
 		
@@ -33,10 +30,5 @@ public class AusefulClass {
 		
 		my_type = rc.getType();
 		byte_code_limiter = my_type.bytecodeLimit;
-	}
-	
-	public static boolean is_location_in_range_of_HQ_or_tower(){
-		return false;
-		// TODO finish this 		
 	}
 }

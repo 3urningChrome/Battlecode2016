@@ -15,7 +15,7 @@ public class NavigationBase extends AusefulClass{
 	
 	static MapLocation location_of_wall;
 	
-	static final int MEMORY_SIZE = 100;
+	static final int MEMORY_SIZE = 10;
 	static final boolean RIGHT_HAND = true;
 	static final boolean LEFT_HAND = false;
 	static final int FOLLOW_WALL_LOOK_ORDER[] = new int[]{0,-1,-2,-3,-4,-5,-6,-7};
@@ -25,13 +25,11 @@ public class NavigationBase extends AusefulClass{
 	
 	static boolean collision_logged_this_turn = false;
 	
-	static Safety life_insurance_policy = Safety.NONE;
-	//cheers Duck,I like this idea.
+	
+	public NavigationBase(){
+	}
 	
 	public static boolean we_have_changed(MapLocation the_destination){
-		if(the_destination==null)
-			return false;
-		
 		return the_destination.equals(destination);
 	}
 	
@@ -52,57 +50,25 @@ public class NavigationBase extends AusefulClass{
 		return;
 	}
 	
-	public static MapLocation navigate_to_destination(MapLocation A){
+	public static MapLocation navigate_to_destination(MapLocation A, MapLocation B){
 		//override this in specific Navigation Algorithm.
 		return current_location;
 	}
 	
-	public static Direction get_direction_of_next_move_towards(MapLocation destination){
-		return current_location.directionTo(navigate_to_destination(destination));
-	}
-	
-	public static double the_distance_from(MapLocation A, MapLocation B){
-		if(A==null || B==null) 
-			return Double.POSITIVE_INFINITY;
-		
+	public static int the_distance_from(MapLocation A, MapLocation B){
 		return A.distanceSquaredTo(B);
 	}
 	
 	public static boolean i_can_move_directly_towards_destination(){
-		if(current_location==null || destination==null) 
-			return true; //navigation not set up. bugging will never work!
-		
-		if(current_location.equals(destination)) 
-			return true;
+		if(current_location.equals(destination)) return true;
 		
 		Direction towards_destination = current_location.directionTo(destination);
-		if(can_move(towards_destination))
-			return true;
-		
-        Direction[] dirs = new Direction[2];
-        Direction left = towards_destination.rotateLeft();
-        Direction right = towards_destination.rotateRight();
-        
-        if (current_location.add(left).distanceSquaredTo(destination) < current_location.add(right).distanceSquaredTo(destination)) {
-            dirs[0] = left;
-            dirs[1] = right;
-        } else {
-            dirs[0] = right;
-            dirs[1] = left;
-        }
-        
-        for (Direction dir : dirs) 
-            if (can_move(dir)) 
-                return true;
-	
-		return false;
+		return can_move(towards_destination);
 	}
 	
-	public static boolean can_move(Direction towards_destination){		
+	public static boolean can_move(Direction towards_destination){
+		//TODO implement *safty*
 		if (rc.canMove(towards_destination)){
-			if(life_insurance_policy.says_this_move_will_shorten_your_life(current_location.add(towards_destination)))
-				return false;
-			
 			direction_to_move = towards_destination;
 			location_to_move_to = current_location.add(direction_to_move);
 			return true;
@@ -116,31 +82,14 @@ public class NavigationBase extends AusefulClass{
 		collision_logged_this_turn = true;
 	}
 	
-	public static void log_new_leave_point(){
-		leave_points[i] = current_location;
-	}
-	
 	public static MapLocation position_of_last_collision(){
 		return hit_points[i];
 	}
 	
-	public static boolean we_have_been_here_already(){
-		if (collision_logged_this_turn == true) return false;
-		
-		if (current_location.equals(position_of_last_collision())) return true;
-		return false;
-	}	
-	
-	public static boolean we_have_been_here_as_part_of_a_past_collision(){
-		for(int collision_counter = 0; collision_counter < i; collision_counter ++){
-			if (current_location.equals(hit_points[i])) return true;
-			if (current_location.equals(leave_points[i])) return true;
-		}
-		return false;
-	}
-	
 	public static MapLocation follow_wall(boolean right_handed){
-//TODO decide how to handle other bots in the way		
+// Movable objects, other robots for instance, cause this issues. as wall could disappear
+// hence the escape - Crap Walls gone
+		
 		int hand_multiplier;
 		hand_multiplier = right_handed ? 1 : -1;
 		

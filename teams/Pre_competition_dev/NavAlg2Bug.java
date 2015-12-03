@@ -2,9 +2,9 @@ package Pre_competition_dev;
 
 import battlecode.common.*;
 
-public class NavOneBug extends NavigationBase {
-	static double closest_distance;
-	
+public class NavAlg2Bug extends NavigationBase {
+	static double distance_when_bugging_occured;
+
 	public static MapLocation navigate_to_destination(MapLocation the_destination){
 		if(current_location.equals(destination)) return current_location;
 		
@@ -12,7 +12,7 @@ public class NavOneBug extends NavigationBase {
 		
 		if(we_have_changed(the_destination)) {
 			initialise_ready_for(the_destination);
-			closest_distance = Double.POSITIVE_INFINITY;
+			distance_when_bugging_occured = Double.POSITIVE_INFINITY;
 		}
 
 		if(current_navigation_state == NavBugState.DIRECT){
@@ -21,6 +21,7 @@ public class NavOneBug extends NavigationBase {
 
 			current_navigation_state = NavBugState.CLOCKWISE;
 			log_new_collision();
+			log_closest_distance();
 		}
 		
 		if(current_navigation_state == NavBugState.CLOCKWISE){
@@ -29,11 +30,15 @@ public class NavOneBug extends NavigationBase {
 				return current_location;
 			}
 			
-			if(i_can_move_directly_towards_destination()){
+			if(i_can_move_directly_towards_destination() && i_am_closer_than_i_was_when_i_started_bugging()){
+				current_navigation_state = NavBugState.DIRECT;
+				log_new_leave_point();
+				return location_to_move_to;
+			} 
+			
+			if(we_have_been_here_as_part_of_a_past_collision()){
 				current_navigation_state = NavBugState.ANTI_CLOCKWISE;
-				log_new_collision();
-			} else{
-				log_closest_distance();
+			}else{
 				return follow_wall(RIGHT_HAND);
 			}
 		}
@@ -44,43 +49,38 @@ public class NavOneBug extends NavigationBase {
 				return current_location;
 			}	
 			
-			if (i_am_closer_than_i_have_ever_been() && i_can_move_directly_towards_destination()){
+			if (i_can_move_directly_towards_destination() && i_am_closer_than_i_was_when_i_started_bugging()){
 				current_navigation_state = NavBugState.DIRECT;
+				log_new_leave_point();
 				return location_to_move_to;	
 			}
-			
-			log_closest_distance();
 			return follow_wall(LEFT_HAND);
 		}
 		return current_location; //if all else fails refuse to move
 	}
 	
 	public static void log_closest_distance(){
-		closest_distance = Math.min(closest_distance, the_distance_from(current_location,destination));
+		distance_when_bugging_occured = Math.min(distance_when_bugging_occured, the_distance_from(current_location,destination));
 	}
 	
-	
-	public static boolean i_am_closer_than_i_have_ever_been(){
-		return (the_distance_from(current_location,destination) < closest_distance);
+	public static boolean i_am_closer_than_i_was_when_i_started_bugging(){
+		return (the_distance_from(current_location,destination) < distance_when_bugging_occured);
 	}
 }
 
 /**
-One Bug
+NavAlg2Bug
 1) Drive directly to the target until one of the following occurs:
-a) Target is reached.  OneBug stops.
+a) Target is reached.  NavAlg2Bug stops.
 b) An obstacle is encountered.  Go to step 2.
 2) Perform clockwise circumnavigation until one of the following occurs:
-a) Target is reached.  OneBug stops.
-b) The robot is able to drive towards the target.  Go to step 3.
-c) The robot completes circumnavigation around the blocking  
-obstacle.  The target is unreachable and OneBug stops.
+a) Target is reached.  NavAlg2Bug stops.
+b) The robot is able to drive towards the target, AND it is closer now than it was when it started bugging: Go to Step 1
+c) A Previous H or L point is reached (Not H(i) though) Go to Step 3
+d) Robot Reaches H(i): Destination is unreachable
 3) Perform counter-clockwise circumnavigation until one of the following 
 occurs:
-a) Target is reached.  OneBug stops.
-b) The robot is at a point which is closer to the target than any  
-previously visited and it is able to drive towards the target.  Go to 
-step 1.
-c) The robot completes circumnavigation around the blocking  
-obstacle.  The target is unreachable and OneBug stops.
+a) Target is reached.  NavAlg2Bug stops.
+b) The robot is able to drive towards the target, AND it is closer now than it was when it started bugging: Go to Step 1
+d) Robot Reaches H(i): Destination is unreachable
 */
