@@ -15,6 +15,7 @@ public class FireControl extends AusefulClass{
 	}
 	
 	public static boolean shoot_deadest_enemy() throws GameActionException{
+//todo any robot that can be one shot can be considered 'deadest' so return early.		
 		RobotInfo[] enemies_in_range = Scanner.scan_for_enemies_in_range();
 		RobotInfo target = null;
 		double health = Double.POSITIVE_INFINITY; 

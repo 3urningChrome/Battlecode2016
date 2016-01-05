@@ -141,6 +141,7 @@ public class NavigationBase extends AusefulClass{
 	
 	public static MapLocation follow_wall(boolean right_handed){
 //TODO decide how to handle other bots in the way		
+// if wall no longer there, then quit bugging?		
 		int hand_multiplier;
 		hand_multiplier = right_handed ? 1 : -1;
 		

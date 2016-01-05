@@ -59,7 +59,7 @@ public enum Safety {
 	};
 	
 	public boolean says_this_move_will_shorten_your_life(MapLocation location){
-		return true;
+		return false;
 	}	
 	
 	private static boolean tower_can_fire_at(MapLocation location){
