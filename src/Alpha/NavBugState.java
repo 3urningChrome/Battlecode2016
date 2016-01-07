@@ -1,0 +1,5 @@
+package Alpha;
+
+public enum NavBugState {
+	DIRECT,BUGGING,CLOCKWISE,ANTI_CLOCKWISE,UNREACHABLE
+}
