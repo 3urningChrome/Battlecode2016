@@ -51,6 +51,27 @@ public class FireControl extends AusefulClass{
 		return true;
 	}
 	
+	public static boolean shoot_deadest_zombie() throws GameActionException{
+		if(i_cannot_fire())
+			return false;
+//todo any robot that can be one shot can be considered 'deadest' so return early.		
+		RobotInfo[] zombies_in_range = Scanner.scan_for_zombies_in_range();
+		RobotInfo target = null;
+		double health = Double.POSITIVE_INFINITY; 
+		
+		for(RobotInfo current_zombie:zombies_in_range)
+			if(current_zombie.health < health){
+				target = current_zombie;
+				health = current_zombie.health;
+			}
+		
+		if(target == null)
+			return false;
+		
+		rc.attackLocation(target.location);
+		return true;
+	}	
+	
 	public static boolean i_cannot_fire(){
 		if (rc.getWeaponDelay() -1 >= 0)
 			return true;

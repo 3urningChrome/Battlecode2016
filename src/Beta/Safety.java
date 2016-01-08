@@ -11,8 +11,11 @@ public enum Safety {
 		public boolean says_this_move_will_shorten_your_life(MapLocation location){
 			if(Scanner.says_targets_are_in_range()){
 				MapLocation closest_target = Scanner.find_closest_enemy().location;
-				if(AusefulClass.current_location.distanceSquaredTo(closest_target) > location.distanceSquaredTo(closest_target))
+				if(AusefulClass.current_location.distanceSquaredTo(closest_target) >= location.distanceSquaredTo(closest_target))
 					return true;
+				
+				if(location.distanceSquaredTo(closest_target) > Scanner.my_type.attackRadiusSquared)
+					return true; //don't be chicken!
 			}
 			return false;
 		}

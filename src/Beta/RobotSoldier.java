@@ -30,10 +30,11 @@ public class RobotSoldier extends AusefulClass {
 	private static void turn() throws GameActionException {
 		current_location = rc.getLocation();
 		rc.setIndicatorString(2, "");
+		NavigationBase.life_insurance_policy = Safety.DONT_ADVANCE_PAST_MAX_RANGE;
 		
 		Communications.log_enemies();
 		
-		FireControl.shoot_closest_zombie();
+		FireControl.shoot_deadest_zombie();
 		FireControl.shoot_deadest_enemy();
 				
 		Communications.find_closest_Archon();
@@ -53,8 +54,10 @@ public class RobotSoldier extends AusefulClass {
 		if(Scanner.can_see_targets())
 			destination = Scanner.find_closest_enemy().location;
 		
-		if(rc.getHealth() < my_type.maxHealth*0.75)
+		if(rc.getHealth() < my_type.maxHealth*0.75){
 			destination = location_of_archon;
+			NavigationBase.life_insurance_policy = Safety.RETREAT;
+		}
 		
 		Navigation.go_to(destination);
 		rc.setIndicatorLine(current_location, destination, 0, 125, 125);

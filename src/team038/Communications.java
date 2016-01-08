@@ -107,7 +107,9 @@ public class Communications extends AusefulClass{
 		MapLocation closest_point_of_interest = null;
 		double closest_distance = Double.POSITIVE_INFINITY;
 	
-		for(Signal current_message:message_queue){
+		for(Signal current_message:message_queue){	
+			if(Clock.getBytecodesLeft() < my_type.bytecodeLimit/5)
+				return closest_point_of_interest;
 			if(current_message.getTeam() == friendly)
 				if((current_message.getMessage() == null && message_type == Distress_data) || (current_message.getMessage() != null && current_message.getMessage()[0] == message_type))
 					if(current_message.getLocation().distanceSquaredTo(current_location) < closest_distance){
