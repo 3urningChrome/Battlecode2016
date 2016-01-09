@@ -17,6 +17,7 @@ public class RobotSoldier extends AusefulClass {
 		MapLocation location_of_archon = Communications.find_closest_Archon();
 		destination = current_location;
 				
+		NavigationBase.life_insurance_policy = Safety.DONT_ADVANCE_PAST_MAX_RANGE;
 		while(true){
 			try{
 				turn();
@@ -30,13 +31,12 @@ public class RobotSoldier extends AusefulClass {
 	private static void turn() throws GameActionException {
 		current_location = rc.getLocation();
 		rc.setIndicatorString(2, "");
-		NavigationBase.life_insurance_policy = Safety.DONT_ADVANCE_PAST_MAX_RANGE;
 		
 		Communications.log_enemies();
-		
+			
 		FireControl.shoot_deadest_zombie();
 		FireControl.shoot_deadest_enemy();
-				
+		
 		Communications.find_closest_Archon();
 		if(location_of_archon == null)
 			location_of_archon = current_location;
@@ -47,27 +47,25 @@ public class RobotSoldier extends AusefulClass {
 		if(closest_friend != null)
 			destination = current_location.add(current_location.directionTo(closest_friend.location).opposite(),5);
 		
-		MapLocation closest_distress_call = Communications.find_closest_distress();
-		if (closest_distress_call != null)
-			destination = closest_distress_call;
+		MapLocation closest_Comms_data = Communications.find_closest_fight();
+		if (closest_Comms_data != null)
+			destination = closest_Comms_data;
 		
 		if(Scanner.can_see_targets())
 			destination = Scanner.find_closest_enemy().location;
 		
-		if(rc.getHealth() < my_type.maxHealth*0.75){
+		if(rc.getHealth() > my_type.maxHealth*0.70)
+			NavigationBase.life_insurance_policy = Safety.DONT_ADVANCE_PAST_MAX_RANGE;
+			
+		if(rc.getHealth() < my_type.maxHealth*0.33 || NavigationBase.life_insurance_policy == Safety.HEAL){
 			destination = location_of_archon;
-			NavigationBase.life_insurance_policy = Safety.RETREAT;
+			NavigationBase.life_insurance_policy = Safety.HEAL;
 		}
 		
 		Navigation.go_to(destination);
 		rc.setIndicatorLine(current_location, destination, 0, 125, 125);
-		
-		Direction away_from_archon = current_location.directionTo(location_of_archon).opposite();
-		if(rc.isCoreReady() && !current_location.equals(location_of_archon))
-			if(rc.onTheMap(current_location.add(away_from_archon)) && rc.senseRubble(current_location.add(away_from_archon)) > GameConstants.RUBBLE_SLOW_THRESH){
-				rc.clearRubble(away_from_archon);
-				rc.setIndicatorString(2, "Clearing: " + away_from_archon.toString() );
-			}
+				
+		clear_rubble();
 //					
 		rc.setIndicatorString(1, NavigationBase.current_navigation_state.toString());
 	}

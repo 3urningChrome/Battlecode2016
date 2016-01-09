@@ -1,5 +1,6 @@
-package team038;
+package Gamma;
 
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
@@ -36,10 +37,19 @@ public class RobotSoldier extends AusefulClass {
 	//Read Comms
 		Communications.log_enemies();
 		Communications.find_closest_Archon();
-			
-	//shoot
-		FireControl.shoot_deadest_zombie();
-		FireControl.shoot_deadest_enemy();
+		
+	//detect invisible enemy (turrets)
+		if(Scanner.there_is_hidden_enemy()){
+			Scanner.reset_health();
+			//assume I just walked into it.
+			Direction direction_last_travelled = previous_location.directionTo(current_location);
+			int guess_distance = 7;
+			if(direction_last_travelled.isDiagonal())
+				guess_distance = 6;
+			MapLocation invisible_enemy = current_location.add(direction_last_travelled,guess_distance);
+			if(!Communications.exclusion_zones.contains(invisible_enemy))
+				Communications.exclusion_zones.add(invisible_enemy);
+		}
 		
 	//Navigation, Find next Destination.
 		RobotInfo closest_friend = Utilities.find_closest_RobotInfo(Scanner.scan_for_friend());
@@ -49,7 +59,6 @@ public class RobotSoldier extends AusefulClass {
 		MapLocation closest_Comms_data = Communications.find_closest_fight();
 		if (closest_Comms_data != null){
 			destination = closest_Comms_data;
-			rc.setIndicatorDot(destination, 255, 0, 0);
 		}
 		
 		if(Scanner.can_see_targets()){
@@ -66,6 +75,10 @@ public class RobotSoldier extends AusefulClass {
 		}
 		
 		NavSimpleMove.go_towards_destination();
+		
+		//shoot
+		FireControl.shoot_deadest_zombie();
+		FireControl.shoot_deadest_enemy();		
 	}
 }
 

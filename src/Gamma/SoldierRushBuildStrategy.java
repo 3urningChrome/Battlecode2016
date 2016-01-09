@@ -1,4 +1,4 @@
-package team038;
+package Gamma;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;

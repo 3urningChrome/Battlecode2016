@@ -1,5 +1,0 @@
-package team038;
-
-public enum NavBugState {
-	DIRECT,BUGGING,CLOCKWISE,ANTI_CLOCKWISE,UNREACHABLE
-}

@@ -168,9 +168,9 @@ public class NavDuckBug extends NavigationBase {
 
 	private static boolean detectBugIntoEdge() throws GameActionException {
 	    if (bugWallSide == WallSide.LEFT) {
-	        return rc.onTheMap(current_location.add(bugLastMoveDir.rotateLeft()));
+	    	 return !rc.onTheMap(current_location.add(bugLastMoveDir.rotateLeft()));
 	    } else {
-	        return rc.onTheMap(current_location.add(bugLastMoveDir.rotateRight()));
+	        return !rc.onTheMap(current_location.add(bugLastMoveDir.rotateRight()));
 	    }
 	}
 

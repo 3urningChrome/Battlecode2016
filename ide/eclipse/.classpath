@@ -3,14 +3,16 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/hamcrest-core-1.3.jar"/>
-	<classpathentry kind="lib" path="lib/junit-4.12.jar"/>
-	<classpathentry kind="lib" path="lib/junit-javadoc-4.12.jar"/>
-	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/battlecode-2016.0.0.3.jar"/>
-	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/battlecode-javadoc-2016.0.0.3.jar"/>
-	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/battlecode-mapeditor-2016.0.0.3.jar"/>
-	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/hamcrest-core-1.3.jar"/>
-	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/junit-4.12.jar"/>
-	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/junit-javadoc-4.12.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/battlecode.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/battlecode-javadoc.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/battlecode-mapeditor.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/hamcrest-core.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/junit.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/junit-javadoc.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/scala-compiler.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/scala-library.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/scala-parser-combinators_2.11.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/scala-reflect.jar"/>
+	<classpathentry kind="lib" path="E:/G Drive/Programming projects/BattleCode/Battlecode2016/lib/scala-xml_2.11.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -1,4 +1,4 @@
-package team038;
+package Gamma;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -13,7 +13,7 @@ public class Communications extends AusefulClass{
 	public static final int Map_Boundary_Data = 4;
 	public static final int Part_Location_Data = 5;
 	public static final int Exclustion_Zone_Location_Data = 6;
-	public static final int Exclustion_Zone_Range_Data = 7;
+	public static final int Exclustion_Zone_Remove_Data = 7;
 	
 	public static Signal[] message_queue;
 	public static int round_message_queue_updated = -1;
@@ -148,6 +148,11 @@ public class Communications extends AusefulClass{
 							if(!exclusion_zones.contains(test_exclusion_location))
 								exclusion_zones.add(test_exclusion_location);
 						}
+						if(current_message.getMessage()[0] == Exclustion_Zone_Remove_Data) {
+							MapLocation test_exclusion_location = convert_message_into_MapLocation(current_message.getMessage()[1]);
+							if(exclusion_zones.contains(test_exclusion_location))
+								exclusion_zones.remove(test_exclusion_location);
+						}						
 					}
 				}
 			}
@@ -187,7 +192,7 @@ public class Communications extends AusefulClass{
 	}
 
 	public static void broadcast_parts() throws GameActionException {
-		System.out.println("bytes left before parts comms" + Clock.getBytecodesLeft());
+	//	System.out.println("bytes left before parts comms" + Clock.getBytecodesLeft());
 		if(rc.getCoreDelay() > 2)
 			return;
 		if(!Scanner.sense_parts())
@@ -203,7 +208,7 @@ public class Communications extends AusefulClass{
 		}
 	}	
 	
-	public static void broadcast_turret_exclusion() throws GameActionException{		
+	public static void log_turret_exclusion() throws GameActionException{		
 		RobotInfo[] near_enemies = Scanner.scan_for_enemy();
 		if (near_enemies.length < 1)
 			return;
@@ -213,19 +218,33 @@ public class Communications extends AusefulClass{
 				return;
 			
 			if(near_enemy.type == RobotType.TURRET){
-				Communications.broadcastMessageSignal(Exclustion_Zone_Location_Data, convert_MapLocation_to_integer(near_enemy.location), Full_Comms_Distance);
-				rc.setIndicatorString(2, "Broadcasting exclusion");
-				exclusion_zones.add(near_enemy.location);
+			//	Communications.broadcastMessageSignal(Exclustion_Zone_Location_Data, convert_MapLocation_to_integer(near_enemy.location), Full_Comms_Distance);
+			//	rc.setIndicatorString(2, "Broadcasting exclusion");
+				if(!exclusion_zones.contains(near_enemy.location))
+					exclusion_zones.add(near_enemy.location);
 			}
 		}
 	}
 	
 	public static void broadcast_known_exclusion() throws GameActionException{		
-		if(!Communications.exclusion_zones.isEmpty())
-			System.out.println("number_of_exclusions: " + exclusion_zones.size());
+		if(!Communications.exclusion_zones.isEmpty()){
+			int signal_strength = Full_Comms_Distance;
+			if(my_type==RobotType.ARCHON)
+				signal_strength = Minimal_Comms_Distance;
+			
+		//	System.out.println("number_of_exclusions: " + exclusion_zones.size());
 			for (Iterator<MapLocation> test = Communications.exclusion_zones.iterator(); test.hasNext();){
-				Communications.broadcastMessageSignal(Exclustion_Zone_Location_Data, convert_MapLocation_to_integer(test.next()), Minimal_Comms_Distance);
+				MapLocation exclusion_location = test.next();
+				if(rc.canSenseLocation(exclusion_location)){
+					RobotInfo check_exclusion = rc.senseRobotAtLocation(exclusion_location);
+					if(check_exclusion==null || check_exclusion.type!=RobotType.TURRET){
+						Communications.broadcastMessageSignal(Exclustion_Zone_Remove_Data, convert_MapLocation_to_integer(exclusion_location),Full_Comms_Distance);
+						test.remove();
+						continue;
+					}
+				}
+				Communications.broadcastMessageSignal(Exclustion_Zone_Location_Data, convert_MapLocation_to_integer(exclusion_location), Full_Comms_Distance);
 			}
-
+		}
 	}	
 }

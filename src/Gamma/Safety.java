@@ -1,4 +1,4 @@
-package team038;
+package Gamma;
 
 import java.util.Iterator;
 
@@ -24,7 +24,7 @@ public enum Safety {
 			//if no enemies in range, but can see them. if moving forward means you can't be shot... should we?
 			if(Scanner.says_no_targets_are_in_range()){
 				AusefulClass.rc.setIndicatorString(2, "No Enemies in range");
-				if(!enemy_can_fire_at(location)){
+				if(!enemy_can_fire_at(location) && !zombies_can_fire_at(location)){
 					AusefulClass.rc.setIndicatorString(2, "no enemy can fire at dest");
 					return false;
 				}
@@ -33,11 +33,9 @@ public enum Safety {
 			if(Scanner.enemies_in_range.length < 2){ //if 1v1
 				AusefulClass.rc.setIndicatorString(2, "1 enemy");
 				if(FireControl.i_will_win_1v1(closest_hostile)){ //and I'll win
-					AusefulClass.rc.setIndicatorString(2, "win 1v1");
 					return true; //we got this. don't move now.
 				}
-			}
-//Step away does not work. 209-210			
+			}		
 			//otherwise, move away. forcing them to move to you....
 			if(AusefulClass.current_location.distanceSquaredTo(closest_hostile.location) >= location.distanceSquaredTo(closest_hostile.location)){
 				AusefulClass.rc.setIndicatorString(2, "moving Closer");
@@ -75,18 +73,20 @@ public enum Safety {
 				return false;
 			
 			//if enemy can fire at square, it's a no, unless they can shoot me now too.
-			if(enemy_can_fire_at(location)){
-				if(enemy_can_fire_at(AusefulClass.current_location))
+			if(enemy_can_fire_at(location) || zombies_can_fire_at(location)){
+				if(enemy_can_fire_at(AusefulClass.current_location) || zombies_can_fire_at(AusefulClass.current_location))
 					return false;
 				return true;
 			}
 			
-			//don't step into sensor range.
+			//don't step into sensor range, unless already in it.
 			if(enemy_can_see(location))
-				return true;
+				if(enemy_cant_see(AusefulClass.current_location))
+					return true;
 			
 			if(zombies_can_see(location))
-				return true;
+				if(zombies_cant_see(AusefulClass.current_location))
+					return true;
 			
 			return false;
 		}
@@ -128,8 +128,10 @@ public enum Safety {
 	public boolean stepping_into_exclusion_zone(MapLocation location){
 		if(!Communications.exclusion_zones.isEmpty())
 			for (Iterator<MapLocation> test = Communications.exclusion_zones.iterator(); test.hasNext();){
-				if(location.distanceSquaredTo(test.next()) <= RobotType.TURRET.attackRadiusSquared){
-					AusefulClass.rc.setIndicatorString(2, "Stopped by Exclusion");
+				MapLocation exclusion_test = test.next();
+				if(location.distanceSquaredTo(exclusion_test) <= RobotType.TURRET.attackRadiusSquared){
+					if(exclusion_test.distanceSquaredTo(AusefulClass.current_location) >= exclusion_test.distanceSquaredTo(location))
+					AusefulClass.rc.setIndicatorString(1, "Exclusion: " + Clock.getBytecodesLeft());
 					return true;
 				}
 			}
@@ -150,7 +152,7 @@ public enum Safety {
 	
 	private static boolean zombies_can_fire_at(MapLocation location) {
 		for(RobotInfo zombie_robot:Scanner.scan_for_zombie()){
-			if(zombie_robot.location.distanceSquaredTo(location) <= zombie_robot.type.attackRadiusSquared)
+			if(zombie_robot.location.distanceSquaredTo(location) <= Math.max(zombie_robot.type.attackRadiusSquared,8))
 				return true;
 		}
 		return false;
@@ -158,7 +160,10 @@ public enum Safety {
 	
 	private static boolean enemy_can_see(MapLocation location) {
 		for(RobotInfo enemy_robot:Scanner.scan_for_enemy()){
-			if(enemy_robot.location.distanceSquaredTo(location) <= enemy_robot.type.sensorRadiusSquared)
+			int enemy_range = enemy_robot.type.sensorRadiusSquared;
+			if (enemy_robot.type == RobotType.TURRET)
+				enemy_range = RobotType.TURRET.attackRadiusSquared;
+			if(enemy_robot.location.distanceSquaredTo(location) <= enemy_range)
 				return true;
 		}
 		return false;
@@ -166,7 +171,7 @@ public enum Safety {
 	
 	private static boolean zombies_can_see(MapLocation location) {
 		for(RobotInfo zombie_robot:Scanner.scan_for_zombie()){
-			if(zombie_robot.location.distanceSquaredTo(location) <= zombie_robot.type.sensorRadiusSquared)
+			if(zombie_robot.location.distanceSquaredTo(location) <= zombie_robot.type.attackRadiusSquared)
 				return true;
 		}
 		return false;

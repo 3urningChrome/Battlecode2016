@@ -1,4 +1,4 @@
-package Beta;
+package Gamma;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -15,7 +15,7 @@ public class RobotArchon extends AusefulClass {
 		AusefulClass.init(robot_controller);
 		destination = current_location.add(Direction.NORTH, 50);
 		
-		NavigationBase.life_insurance_policy = Safety.AVOID_ALL_NON_FRIENDS;
+		NavSimpleMove.life_insurance_policy = Safety.AVOID_ALL_NON_FRIENDS;
 		
 		the_plan = BuildStrategy.SOLDIER_RUSH;
 		
@@ -31,24 +31,23 @@ public class RobotArchon extends AusefulClass {
 
 	private static void turn() throws GameActionException {
 		current_location = rc.getLocation();
-		rc.setIndicatorString(1,"Default");
-	
+		
 		repair();
 		Communications.log_enemies();
+		
+		if(rc.getRoundNum() % 30 == 0)
 		Communications.broadcast_my_position();
 		
-		if(rc.getRoundNum()%100 == 0)
-			destination = current_location.add(Direction.NORTH,10);  //need better plan!
-		
+		if(rc.getRoundNum() % 15 == 0)
+			Communications.broadcast_known_exclusion();
+				
 		MapLocation closest_Comms_data = Communications.find_closest_fight();
 		if (closest_Comms_data != null){
-			if(closest_Comms_data.distanceSquaredTo(current_location) < 100)
+			if(closest_Comms_data.distanceSquaredTo(current_location) < 64)
 				destination = current_location.add(current_location.directionTo(closest_Comms_data).opposite(),2);
 		}
 			
-		
 		if(Scanner.cant_see_targets()){
-			rc.setIndicatorString(1, "Can't See Targets");
 			activate_neutral();
 			the_plan.I_am_building();
 		}
@@ -56,25 +55,26 @@ public class RobotArchon extends AusefulClass {
 		if (Scanner.sense_parts()){
 			destination = Scanner.parts_location;
 			rc.setIndicatorDot(destination, 0, 255, 0);
+		} else{
+			MapLocation communicated_closest_parts = Communications.find_closest_parts();
+			if(communicated_closest_parts != null)
+				destination = communicated_closest_parts;
 		}
 		
 		if(Scanner.find_closest_neutral() != null){
 			destination = Scanner.find_closest_neutral().location;
+			rc.setIndicatorDot(destination, 0, 0, 255);
 		}
 		
-		if(Scanner.cant_see_targets()){
-			Navigation.go_to(destination);
-		} else{
-			Navigation.move_away_from(Scanner.find_closest_enemy().location);
-		}
+		if(Scanner.can_see_targets())
+			destination = current_location.add(current_location.directionTo(Scanner.find_closest_hostile().location).opposite(),5);
 		
-		clear_rubble();
+		NavSimpleMove.go_towards_destination();	
 	}
 	
 	private static void activate_neutral() throws GameActionException {
 		RobotInfo closest_neutral_robot = Scanner.find_closest_neutral();
-		
-		rc.setIndicatorString(1, "Attempting Activate");
+
 		if(!rc.isCoreReady())
 			return;
 				
@@ -85,7 +85,7 @@ public class RobotArchon extends AusefulClass {
 			return;
 		
 		rc.activate(closest_neutral_robot.location);
-		rc.setIndicatorString(1, "Activated");
+		rc.setIndicatorString(1, "Activated: closest_neutral_robot.location");
 	}
 
 	private static void repair() throws GameActionException{

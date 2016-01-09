@@ -20,6 +20,18 @@ public enum Safety {
 			return false;
 		}
 	},
+	HEAL{
+		public boolean says_this_move_will_shorten_your_life(MapLocation location){
+			if(Scanner.can_see_targets()){
+				MapLocation closest_target = Scanner.find_closest_enemy().location;
+				if(AusefulClass.current_location.distanceSquaredTo(closest_target) >= location.distanceSquaredTo(closest_target))
+					return true;
+			}
+			if(location.isAdjacentTo(AusefulClass.location_of_archon))
+				return true;
+			return false;
+		}
+	},
 	RETREAT{
 		public boolean says_this_move_will_shorten_your_life(MapLocation location){
 			if(Scanner.can_see_targets()){

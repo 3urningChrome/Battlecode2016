@@ -14,10 +14,10 @@ public class Navigation extends AusefulClass{
 	
 	public static boolean go_to(MapLocation destination) throws GameActionException{
 		if(!rc.isCoreReady()){
-			rc.setIndicatorString(3, "Core Delay");
+			rc.setIndicatorString(2, "Core Delay");
 			return false;
 		}
-		rc.setIndicatorString(0, "GoTO: " + destination.toString());		
+		rc.setIndicatorString(2, "GoTO: " + destination.toString());		
 		if(DistributedBfs.i_know_how_to_get_to(destination))
 			if(move_towards(DistributedBfs.get_direction_to_move_to_path_to(destination)))
 				return true;

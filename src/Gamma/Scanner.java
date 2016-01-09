@@ -1,4 +1,4 @@
-package Beta;
+package Gamma;
 
 import battlecode.common.*;
 
@@ -92,7 +92,18 @@ public class Scanner extends AusefulClass{
 		return nearby_neutrals;
 	}
 	
-	public static RobotInfo find_closest_enemy() {
+	public static boolean can_see_turrets(){
+		scan_for_enemy();
+		for(RobotInfo near_enemy:nearby_enemies){
+			if(near_enemy.type == RobotType.TURRET){
+				rc.setIndicatorString(2,"Seen Turret: " + near_enemy.location);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static RobotInfo find_closest_hostile() {
 		RobotInfo closestEnemy = Utilities.find_closest_RobotInfo(scan_for_enemy());
 		RobotInfo closestZombie = Utilities.find_closest_RobotInfo(scan_for_zombie());
 		
