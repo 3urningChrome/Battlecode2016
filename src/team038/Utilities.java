@@ -1,5 +1,8 @@
 package team038;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import battlecode.common.*;
 
 public class Utilities extends AusefulClass{
@@ -39,4 +42,25 @@ public class Utilities extends AusefulClass{
 		}
 		return target;
 	}	
+	
+	public static MapLocation find_closest_MapLocation(ArrayList<MapLocation> the_list){
+		double range = Double.POSITIVE_INFINITY; 
+		MapLocation target = null;
+		
+		if(the_list.size() == 0)
+			return null;
+		
+		for (Iterator<MapLocation> test = the_list.iterator(); test.hasNext();){
+			MapLocation test_location = test.next();
+			if(rc.canSense(test_location))
+				if(rc.senseParts(test_location) == 0)
+					test.remove();
+				
+			if(current_location.distanceSquaredTo(test_location) < range){
+				target = test_location;
+				range = current_location.distanceSquaredTo(test_location);
+			}			
+		}
+		return target;
+	}
 }

@@ -25,6 +25,10 @@ public class RobotPlayer {
         if (rc.getType() == RobotType.ARCHON) {
             try {
                 // Any code here gets executed exactly once at the beginning of the game.
+            	System.out.println("Sensing square 10 to north" + rc.senseRubble(rc.getLocation().add(Direction.NORTH,10)));
+            	System.out.println("Sensing square 10 to S" + rc.senseRubble(rc.getLocation().add(Direction.SOUTH,10)));
+            	System.out.println("Sensing square 10 to E" + rc.senseRubble(rc.getLocation().add(Direction.EAST,10)));
+            	System.out.println("Sensing square 10 to W" + rc.senseRubble(rc.getLocation().add(Direction.WEST,10)));
             } catch (Exception e) {
                 // Throwing an uncaught exception makes the robot die, so we need to catch exceptions.
                 // Caught exceptions will result in a bytecode penalty.

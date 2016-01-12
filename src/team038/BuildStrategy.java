@@ -8,7 +8,11 @@ public enum BuildStrategy {
 			return SoldierRushBuildStrategy.attempt_to_build();
 		}
 	},
-	
+	SOLDIER_TURRET{
+		public boolean I_am_building() throws GameActionException{
+			return SoldierRushWithSomeTurret.attempt_to_build();
+		}
+	},
 	GUARD_RUSH{
 		public boolean I_am_building() throws GameActionException{
 			return false;

@@ -1,6 +1,5 @@
 package team038;
 
-import battlecode.common.Clock;
 import battlecode.common.RobotController;
 
 public class RobotPlayer {
@@ -8,15 +7,22 @@ public class RobotPlayer {
 		switch (rc.getType()){
 		case ARCHON:
 			RobotArchon.loop(rc);
+			break;
 		case SOLDIER:
 			RobotSoldier.loop(rc);
+			break;
 		case SCOUT:
-			RobotScout.loop(rc);			
+			RobotScout.loop(rc);	
+			break;
+		case TURRET:
+			RobotTurret.loop(rc);	
+			break;
+		case TTM:
+			RobotTurret.loop(rc);
+			break;
 		default:
 			System.out.println("Unknown robot spawned");
-			while(true){
-				Clock.yield();
-			}
+			RobotDefault.loop(rc);
 		}
 	}
 }

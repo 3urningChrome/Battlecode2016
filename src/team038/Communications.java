@@ -13,219 +13,274 @@ public class Communications extends AusefulClass{
 	public static final int Map_Boundary_Data = 4;
 	public static final int Part_Location_Data = 5;
 	public static final int Exclustion_Zone_Location_Data = 6;
-	public static final int Exclustion_Zone_Range_Data = 7;
+	public static final int Exclustion_Zone_Remove_Data = 7;
+	public static final int Neutral_Location_Data = 8;
 	
 	public static Signal[] message_queue;
 	public static int round_message_queue_updated = -1;
 	public static final int Standard_Comms_Distance = 250;
 	public static final int Full_Comms_Distance = 500;
-	public static final int Minimal_Comms_Distance = 0;
+	public static final int Minimal_Comms_Distance = 2;
 	
 	public static ArrayList<MapLocation> exclusion_zones = new ArrayList<MapLocation>();
+	public static ArrayList<MapLocation> chatter_zones = new ArrayList<MapLocation>();
+	public static ArrayList<MapLocation> location_zones = new ArrayList<MapLocation>();
+	public static ArrayList<MapLocation> distress_zones = new ArrayList<MapLocation>();
+	public static ArrayList<MapLocation> archon_zones = new ArrayList<MapLocation>();
+	public static ArrayList<MapLocation> neutral_zones = new ArrayList<MapLocation>();
+	
+	public static boolean override_comms = false; 
+		
 	
 	public static void update_communications(){
+		if(Clock.getBytecodeNum() > byte_code_limiter - 500)
+			return;		
 		if(rc.getRoundNum() <= round_message_queue_updated)
 			return;
 		
+		if(rc.getRoundNum() % 50 == 0){
+			distress_zones.clear();
+			chatter_zones.clear();
+		}
+		
+		if(!archon_zones.isEmpty())
+			location_of_archon = Utilities.find_closest_MapLocation(archon_zones);
+		
+		archon_zones.clear();
+		location_zones.clear();
+		
 		message_queue = rc.emptySignalQueue();
 		round_message_queue_updated = rc.getRoundNum();
+				
+		for(Signal current_message:message_queue){
+			MapLocation message_location = current_message.getLocation();
+			if(Clock.getBytecodeNum() > byte_code_limiter - 200)
+				return;
+			if(current_message.getTeam() == enemy){
+				if(my_type == RobotType.TURRET){
+				if(!chatter_zones.contains(message_location))
+					chatter_zones.add(message_location);
+				}
+				continue;
+			}
+			
+			if(current_message.getMessage() == null){ //basic can only be distress
+				if(!distress_zones.contains(message_location))
+					distress_zones.add(message_location);
+				continue;
+			}
+			int message_data = current_message.getMessage()[1];
+			MapLocation data_location;
+					
+			switch(current_message.getMessage()[0]){
+			case Location_Data:
+				if(message_data == 1){
+					if(!archon_zones.contains(message_location))
+							archon_zones.add(message_location);
+				} else{
+					if(my_type == RobotType.TURRET){
+						data_location = convert_message_into_MapLocation(current_message.getMessage()[1]);
+						if(!location_zones.contains(data_location))
+							location_zones.add(data_location);
+					}
+				}
+				break;
+			case Part_Location_Data:
+				if(my_type==RobotType.ARCHON){
+					data_location = convert_message_into_MapLocation(current_message.getMessage()[1]);
+					if(!Scanner.parts_locations.contains(data_location))
+						Scanner.parts_locations.add(data_location);
+				}
+				break;
+			case Neutral_Location_Data:
+				if(my_type==RobotType.ARCHON){
+					data_location = convert_message_into_MapLocation(current_message.getMessage()[1]);
+					if(!neutral_zones.contains(data_location))
+						neutral_zones.add(data_location);
+				}
+				break;				
+			case Exclustion_Zone_Location_Data:
+				data_location = convert_message_into_MapLocation(current_message.getMessage()[1]);
+				if(!exclusion_zones.contains(data_location))
+					exclusion_zones.add(data_location);
+				break;				
+			case Exclustion_Zone_Remove_Data:
+				data_location = convert_message_into_MapLocation(current_message.getMessage()[1]);
+				if(exclusion_zones.contains(data_location))
+					exclusion_zones.remove(data_location);				
+				break;
+			default:
+				System.out.println("Unknown messageType");
+			}
+		}
 	}
 	
-	public static MapLocation get_rally_point() throws GameActionException {
-		update_communications();
-		//return rally point. or current location
-		return current_location;
+	public static void log_distress_call() throws GameActionException{
+		broadcast_basic();
 	}
 	
-	public static void broadcastMessageSignal(int message_type,int message_data,int distance) throws GameActionException{
-		if(rc.getMessageSignalCount() >= GameConstants.MESSAGE_SIGNALS_PER_TURN)
-			return;
-		rc.broadcastMessageSignal(message_type, message_data, distance);
+	public static void death_shout() throws GameActionException{
+		rc.broadcastSignal(70);
+		rc.setIndicatorString(2,"Death Shout");
 	}
 	
 	public static void broadcast_my_position() throws GameActionException{
+		rc.setIndicatorString(2, "Broadcast_message start");
+		if(Clock.getBytecodeNum() > byte_code_limiter - 300)
+			return;
+		
 		if(my_type == RobotType.ARCHON){
-			broadcastMessageSignal(Location_Data, 1, Standard_Comms_Distance);
+			rc.setIndicatorString(2, "Broadcast_message Archon");
+			broadcast_message(Location_Data, 1);
 		}else if(my_type == RobotType.SCOUT){
-			broadcastMessageSignal(Location_Data, 2, Standard_Comms_Distance);
-		} else{
-			rc.broadcastSignal(100);
+			broadcast_message(Location_Data, 2);
 		}
 	}
-
-	public static void log_enemies() throws GameActionException {
-		RobotInfo[] enemy_contacts = Scanner.scan_for_enemy();
-		RobotInfo[] zombie_contacts = Scanner.scan_for_zombie();
-		
-		if(enemy_contacts.length + zombie_contacts.length == 0)
-			return;
-		
-		switch(my_type){
-		case ARCHON:
-		case SCOUT:
-			int coded_map_location = convert_MapLocation_to_integer(Scanner.find_closest_hostile().location);
-			broadcastMessageSignal(Enemy_Location_Data, coded_map_location, Standard_Comms_Distance);
-			rc.setIndicatorDot(Scanner.find_closest_hostile().location, 255, 0, 0);
-			return;
-		default:
-			rc.broadcastSignal(100);
-		}
-	}
-
-	public static MapLocation find_closest_distress() {
-		return find_closest(Distress_data,0);
-	}
 	
-	public static MapLocation find_closest_enemy_location() {
-		return find_closest(Enemy_Location_Data,0);
-	}
-	
-	public static MapLocation find_closest_fight(){	
-		//ordered from most likely to continue to least in terms of signal.
-		MapLocation closest_distress = find_closest_distress();
-		if(closest_distress!=null){
-			rc.setIndicatorDot(closest_distress, 255, 255, 255);
-			return current_location.add(current_location.directionTo(closest_distress),5);
-		}
-	
-		MapLocation closest_enemy = find_closest_enemy_location();
-		if(closest_enemy != null){
-			rc.setIndicatorDot(closest_enemy, 255, 0, 255);
-			return closest_enemy;
-		}
-		
-		return find_closest_chatter_location();
-	}
-	
-	public static MapLocation find_closest_Archon(){
-		MapLocation temp = find_closest(Location_Data,1);
-		if(temp != null)
-			location_of_archon = temp;
-		
-		return location_of_archon;
-	}
-	
-	public static MapLocation find_closest_messenger(){
-		return find_closest(Location_Data,0);
-	}
-	
-	public static MapLocation find_closest_parts(){
-		return find_closest(Part_Location_Data,0);
-	}
-	
-	public static MapLocation find_closest(int message_type, int message_value){
-		update_communications();
-	
-		MapLocation closest_point_of_interest = null;
-		double closest_distance = Double.POSITIVE_INFINITY;
-	
-		for(Signal current_message:message_queue){
-			if(Clock.getBytecodesLeft() < my_type.bytecodeLimit/5)
-				return closest_point_of_interest;			
-			if(current_message.getTeam() == friendly){
-				if(current_message.getMessage() == null){
-					if(message_type == Distress_data){
-						if(current_message.getLocation().distanceSquaredTo(current_location) < closest_distance){
-							closest_distance = current_message.getLocation().distanceSquaredTo(current_location);
-							closest_point_of_interest = current_message.getLocation();
-						}
-					}
-				} else{
-					if(message_type == current_message.getMessage()[0]){
-						MapLocation message_location = current_message.getLocation();
-						if(message_type == Enemy_Location_Data)
-							message_location = convert_message_into_MapLocation(current_message.getMessage()[1]);
-						
-						if(message_value == 0 || message_value == current_message.getMessage()[1])	
-							if(message_location.distanceSquaredTo(current_location) < closest_distance){
-								closest_distance = message_location.distanceSquaredTo(current_location);
-								closest_point_of_interest = message_location;
-							}
-					} else{
-						//bonus, check for exclusion zones.
-						if(current_message.getMessage()[0] == Exclustion_Zone_Location_Data) {
-							MapLocation test_exclusion_location = convert_message_into_MapLocation(current_message.getMessage()[1]);
-							if(!exclusion_zones.contains(test_exclusion_location))
-								exclusion_zones.add(test_exclusion_location);
-						}
+	public static void broadcast_known_exclusion() throws GameActionException{		
+		if(!exclusion_zones.isEmpty()){
+			for (Iterator<MapLocation> test = Communications.exclusion_zones.iterator(); test.hasNext();){
+				if(Clock.getBytecodeNum() > byte_code_limiter - 500)
+					return;
+				MapLocation exclusion_location = test.next();
+				if(rc.canSenseLocation(exclusion_location)){
+					RobotInfo check_exclusion = rc.senseRobotAtLocation(exclusion_location);
+					if(check_exclusion==null || check_exclusion.type!=RobotType.TURRET){
+						broadcast_message(Exclustion_Zone_Remove_Data, convert_MapLocation_to_integer(exclusion_location),Minimal_Comms_Distance);
+						test.remove();
+						continue;
 					}
 				}
+				broadcast_message(Exclustion_Zone_Location_Data, convert_MapLocation_to_integer(exclusion_location), Minimal_Comms_Distance);
 			}
 		}
-		return closest_point_of_interest;
+	}	
+
+	private static void broadcast_basic() throws GameActionException {
+
+		int signal_strength = get_signal_strength();
+		
+		if(override_comms){
+			rc.broadcastSignal(my_type.sensorRadiusSquared * 20);
+			rc.setIndicatorString(2, "Broadcast Distress at: " + my_type.sensorRadiusSquared * 20);
+			return;
+		}
+		if(signal_strength < 0)
+			return;
+		
+
+		rc.broadcastSignal(Math.min(signal_strength,my_type.sensorRadiusSquared * 10));
+
+		rc.setIndicatorString(2, "Broadcast Distress at: " + signal_strength);
+	
+	}
+
+	private static void broadcast_message(int message_type, int data) throws GameActionException {
+		rc.setIndicatorString(2, "Broadcast start");
+		if(rc.getMessageSignalCount() >= GameConstants.MESSAGE_SIGNALS_PER_TURN)
+			return;
+				
+		if(Clock.getBytecodeNum() > byte_code_limiter - 300)
+			return;		
+
+		int signal_strength = get_signal_strength();
+		if(signal_strength < 0)
+			return;	
+				
+		rc.broadcastMessageSignal(message_type, data, signal_strength);
+
+		rc.setIndicatorString(2, "Broadcast_message:" + message_type + " at: " + signal_strength);
 	}
 	
-	public static MapLocation find_closest_chatter_location(){
-		update_communications();
-	
-		MapLocation closest_point_of_interest = null;
-		double closest_distance = Double.POSITIVE_INFINITY;
-	
-		for(Signal current_message:message_queue){
-			if(Clock.getBytecodesLeft() < my_type.bytecodeLimit/5)
-				return closest_point_of_interest;			
-			if(current_message.getTeam() == enemy)
-				if(current_message.getLocation().distanceSquaredTo(current_location) < closest_distance){
-					closest_distance = current_message.getLocation().distanceSquaredTo(current_location);
-					closest_point_of_interest = current_message.getLocation();
-				}
+	public static void burst_neutral() throws GameActionException {
+		for (Iterator<MapLocation> test = neutral_zones.iterator(); test.hasNext();){
+			MapLocation test_location = test.next();
+			if(broadcast_message(Neutral_Location_Data,convert_MapLocation_to_integer(test_location), current_location.distanceSquaredTo(location_of_archon))){
+				test.remove();
+				rc.setIndicatorString(2,"Burst Neutral" +  + current_location.distanceSquaredTo(location_of_archon));
+			}
 		}
-		return closest_point_of_interest;
+	}
+	
+	public static void burst_parts() throws GameActionException {
+		rc.setIndicatorString(2,"Starting Burst Parts");
+		for (Iterator<MapLocation> test = Scanner.parts_locations.iterator(); test.hasNext();){
+			MapLocation test_location = test.next();
+			if(broadcast_message(Part_Location_Data,convert_MapLocation_to_integer(test_location), current_location.distanceSquaredTo(location_of_archon))){
+				test.remove();
+				rc.setIndicatorString(2,"Burst Parts: " + current_location.distanceSquaredTo(location_of_archon));
+			}
+		}
+	}	
+	
+	private static boolean broadcast_message(int message_type, int data, int comms_Distance) throws GameActionException {
+
+		if(rc.getMessageSignalCount() >= GameConstants.MESSAGE_SIGNALS_PER_TURN)
+			return false;
+		
+		if(Clock.getBytecodeNum() > byte_code_limiter - 300)
+			return false;		
+		
+		int signal_strength = get_signal_strength();
+		if(signal_strength < 0 && override_comms == false)
+			return false;	
+		
+		if(signal_strength < comms_Distance && override_comms == false)
+			return false;
+
+		rc.broadcastMessageSignal(message_type, data, comms_Distance);
+
+		rc.setIndicatorString(2, "Broadcast_message:" + message_type + " at: " +comms_Distance );
+		return true;
+	}	
+	
+	private static int get_signal_strength(){
+		
+		// 1/3 * sensorRadius * (100 * x + 1) = Broadcast Radius
+		
+		double my_core_delay = 1 - (rc.getCoreDelay() - (int) rc.getCoreDelay());
+		double my_weapon_delay = 1 - (rc.getWeaponDelay() - (int) rc.getWeaponDelay());
+		
+		if(my_type.canAttack() == false){
+			my_weapon_delay = 0.99999; // hack to stop archons and scouts from not sending messages to conserve weapon.
+		}
+		
+		double left_over = Math.min(my_core_delay,my_weapon_delay);
+		
+		if(left_over == 0 && Math.max(rc.getCoreDelay(), rc.getWeaponDelay()) > 0) 
+			return -1; //delay is whole number, but not zero.
+		
+		if(left_over == 0)
+			left_over = 1;
+		
+		left_over -= 0.005;
+		
+		//    - so ((0.95 * 100)+ 1) * 35 * 0.333333  should === 1119.9999 NOT 0!!
+		
+		if(left_over < 0.05)
+			return -1;
+		
+		double max_distance = (int) (0.33333333 * my_type.sensorRadiusSquared * (100 * (left_over) + 1));
+		
+		
+		if(max_distance < my_type.sensorRadiusSquared)
+			max_distance = -1;
+		
+		if(max_distance > 20000)
+			max_distance = 20000;
+		
+		return (int) (max_distance);		
 	}
 	
 	private static MapLocation convert_message_into_MapLocation(int broadcast_message) {
         int x = (broadcast_message % 32000) - 16000;
         int y = (broadcast_message / 32000) - 16000;
-        //System.out.println("Message->Maplocation : " + broadcast_message + "->" + new MapLocation(x, y).toString());
         return new MapLocation(x, y);	
 	}
 	
 	private static int convert_MapLocation_to_integer(MapLocation location){
 		int message_int = 32000 * (location.y + 16000) + (location.x + 16000);
-		//System.out.println("Maplocation->int : " + location.toString() + "->" + message_int);
 		return message_int;
 	}
-
-	public static void broadcast_parts() throws GameActionException {
-		System.out.println("bytes left before parts comms" + Clock.getBytecodesLeft());
-		if(rc.getCoreDelay() > 2)
-			return;
-		if(!Scanner.sense_parts())
-			return; 
-		if(Clock.getBytecodesLeft() < 300)
-			return;
-		
-		for(MapLocation part:Scanner.sensed_locations){
-			if(rc.senseParts(part) > 0 && rc.senseRubble(part) < GameConstants.RUBBLE_OBSTRUCTION_THRESH){
-				broadcastMessageSignal(Part_Location_Data,convert_MapLocation_to_integer(part),Full_Comms_Distance);
-				rc.setIndicatorDot(part, 100, 100, 100);
-			}
-		}
-	}	
 	
-	public static void broadcast_turret_exclusion() throws GameActionException{		
-		RobotInfo[] near_enemies = Scanner.scan_for_enemy();
-		if (near_enemies.length < 1)
-			return;
-		
-		for(RobotInfo near_enemy:near_enemies){
-			if(Clock.getBytecodesLeft() < 2000)
-				return;
-			
-			if(near_enemy.type == RobotType.TURRET){
-				Communications.broadcastMessageSignal(Exclustion_Zone_Location_Data, convert_MapLocation_to_integer(near_enemy.location), Full_Comms_Distance);
-				rc.setIndicatorString(2, "Broadcasting exclusion");
-				exclusion_zones.add(near_enemy.location);
-			}
-		}
-	}
-	
-	public static void broadcast_known_exclusion() throws GameActionException{		
-		if(!Communications.exclusion_zones.isEmpty())
-			System.out.println("number_of_exclusions: " + exclusion_zones.size());
-			for (Iterator<MapLocation> test = Communications.exclusion_zones.iterator(); test.hasNext();){
-				Communications.broadcastMessageSignal(Exclustion_Zone_Location_Data, convert_MapLocation_to_integer(test.next()), Minimal_Comms_Distance);
-			}
-
-	}	
 }

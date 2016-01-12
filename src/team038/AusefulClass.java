@@ -2,23 +2,23 @@ package team038;
 
 import battlecode.common.*;
 
-import java.util.Iterator;
 import java.util.Random;
 
 public class AusefulClass {
 	
 	static RobotController rc;
 	
-	static final Direction[] DIRECTIONS = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
+	static final Direction[] DIRECTIONS = {Direction.NORTH,Direction.SOUTH, Direction.EAST, Direction.WEST,Direction.NORTH_EAST,Direction.SOUTH_WEST, Direction.SOUTH_EAST, Direction.NORTH_WEST};
 	
 	static Team friendly;
 	static Team enemy;
 	static Team neutral;
 	static Team zombie;
 	
-	static MapLocation current_location;
-	static MapLocation destination;
-	static MapLocation location_of_archon;
+	static MapLocation previous_location = null;
+	static MapLocation current_location = null;
+	static MapLocation destination = null;
+	static MapLocation location_of_archon = null;
 	
 	static RobotType my_type;
 	static int byte_code_limiter;
@@ -33,44 +33,30 @@ public class AusefulClass {
 		neutral = Team.NEUTRAL;
 		zombie = Team.ZOMBIE;
 		
-		current_location = rc.getLocation();
-		
 		my_type = rc.getType();
 		byte_code_limiter = my_type.bytecodeLimit;
 		
 		rnd = new Random(rc.getID());
+		
+		current_location = rc.getLocation();
+		destination = current_location;
+		
+		location_of_archon = current_location;
 
 	}
 	
-	public static void yield(){
-		if(my_type == RobotType.ARCHON){
-			rc.setIndicatorString(0, "Gamma 1.1");
-			//rc.setIndicatorLine(current_location, destination, 0, 125, 125);
-		}else{
-			rc.setIndicatorString(0, destination.toString());
-			rc.setIndicatorString(1, NavSimpleMove.life_insurance_policy.toString());
-			//rc.setIndicatorLine(current_location, destination, 0, 125, 125);
-			rc.setIndicatorLine(current_location, location_of_archon, 0, 255, 0);
-		}
+	public static void yield(){	
 		
-//		if(my_type == RobotType.SCOUT){
-//			if(!Communications.exclusion_zones.isEmpty())
-//				for (Iterator<MapLocation> test = Communications.exclusion_zones.iterator(); test.hasNext();){
-//					MapLocation center_of_exclusion = test.next();
-//					for(Direction single_direction:DIRECTIONS)
-//						rc.setIndicatorLine(center_of_exclusion, center_of_exclusion.add(single_direction,7), 255, 0, 0);
-//				}
-			System.out.println("Bytes left before yield: " + Clock.getBytecodesLeft());
-//		}
-
-		if(rc.getRoundNum()%25 == 0)
-			Scanner.reset_health();
+		//rc.setIndicatorLine(current_location, destination, 120, 120, 120);
+		
+		if(my_type == RobotType.ARCHON)
+			rc.setIndicatorString(0,"Version: Sprint Entry 1.0");
 		
 		Clock.yield();
 		
-		rc.setIndicatorString(0,"");
-		rc.setIndicatorString(1,"");
-		rc.setIndicatorString(2,"");
+		rc.setIndicatorString(0, "");
+		rc.setIndicatorString(1, "");
+		rc.setIndicatorString(2, "");
 	}
 	
 	public static Direction randomDirection(){

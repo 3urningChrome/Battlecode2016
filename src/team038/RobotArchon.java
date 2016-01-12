@@ -1,11 +1,9 @@
 package team038;
 
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotType;
 
 public class RobotArchon extends AusefulClass {
 	
@@ -13,11 +11,10 @@ public class RobotArchon extends AusefulClass {
 	
 	public static void loop(RobotController robot_controller){
 		AusefulClass.init(robot_controller);
-		destination = current_location.add(Direction.NORTH, 50);
-		
-		NavSimpleMove.life_insurance_policy = Safety.AVOID_ALL_NON_FRIENDS;
-		
-		the_plan = BuildStrategy.SOLDIER_RUSH;
+				
+		the_plan = BuildStrategy.SOLDIER_TURRET;
+		//the_plan = BuildStrategy.SOLDIER_RUSH;
+		NavSimpleMove.life_insurance_policy = Safety.ARCHON;
 		
 		while(true){
 			try{
@@ -30,68 +27,79 @@ public class RobotArchon extends AusefulClass {
 	}
 
 	private static void turn() throws GameActionException {
-		current_location = rc.getLocation();
-		
 		repair();
-		Communications.log_enemies();
-		Communications.broadcast_my_position();
-		Communications.broadcast_known_exclusion();
-				
-		MapLocation closest_Comms_data = Communications.find_closest_fight();
-		if (closest_Comms_data != null){
-			if(closest_Comms_data.distanceSquaredTo(current_location) < 64)
-				destination = current_location.add(current_location.directionTo(closest_Comms_data).opposite(),2);
-		}
-			
-		if(Scanner.cant_see_targets()){
+		
+		if(Scanner.can_see_dangerous_hostiles()){
+			byte_code_limiter = 12000;
+			destination = current_location.add(current_location.directionTo(Scanner.find_closest_hostile().location).opposite(),5);
+			Communications.log_distress_call();
+		} else{
+			byte_code_limiter = 20000;
 			activate_neutral();
 			the_plan.I_am_building();
+			
+			RobotInfo closest_neutral = Scanner.find_closest_neutral();
+			if(closest_neutral != null)
+				destination = closest_neutral.location;
+			
+			MapLocation closest_parts_location = Scanner.find_closest_parts();
+			rc.setIndicatorString(1, "Parts: " + Scanner.parts_locations.size());
+			if(closest_parts_location != null){
+				destination = closest_parts_location;
+				if(rc.canSenseLocation(destination))
+					if(rc.senseParts(destination) < 1)
+						Scanner.parts_locations.remove(destination);
+			}			
+		}
+		Communications.update_communications();
+		NavSimpleMove.go_towards_destination();
+		
+		//message	
+		Communications.broadcast_known_exclusion();		
+		Communications.broadcast_my_position();
+		
+		if(Scanner.cant_see_hostiles()){
+			Scanner.sense_parts();
 		}
 		
-		if (Scanner.sense_parts()){
-			destination = Scanner.parts_location;
-			rc.setIndicatorDot(destination, 0, 255, 0);
-		} else{
-			MapLocation communicated_closest_parts = Communications.find_closest_parts();
-			if(communicated_closest_parts != null)
-				destination = communicated_closest_parts;
-		}
+		//debugging:
+//		if(!Communications.exclusion_zones.isEmpty()){
+//			System.out.println("");
+//			System.out.println("*************************************");
+//			System.out.println("");
+//			for (Iterator<MapLocation> test = Communications.exclusion_zones.iterator(); test.hasNext();){
+//				MapLocation exclusion_test = test.next();
+//				System.out.println(exclusion_test.toString());
+//			}
+//			System.out.println("");
+//			System.out.println("*************************************");
+//			System.out.println("");
+//		}
 		
-		if(Scanner.find_closest_neutral() != null){
-			destination = Scanner.find_closest_neutral().location;
-			rc.setIndicatorDot(destination, 0, 0, 255);
-		}
-		
-		if(Scanner.can_see_targets())
-			destination = current_location.add(current_location.directionTo(Scanner.find_closest_hostile().location).opposite(),5);
-		
-		NavSimpleMove.go_towards_destination();	
 	}
 	
 	private static void activate_neutral() throws GameActionException {
-		RobotInfo closest_neutral_robot = Scanner.find_closest_neutral();
 
 		if(!rc.isCoreReady())
 			return;
 				
-		if(closest_neutral_robot == null)
-			return;
+		RobotInfo closest_neutral_robots[] = Scanner.scan_for_neutrals_in_range();
 		
-		if(!closest_neutral_robot.location.isAdjacentTo(current_location))
+		if(closest_neutral_robots.length < 1)
 			return;
-		
-		rc.activate(closest_neutral_robot.location);
-		rc.setIndicatorString(1, "Activated: closest_neutral_robot.location");
+
+		//pick Archon first
+		rc.activate(closest_neutral_robots[0].location);
+		rc.setIndicatorString(1, "Activated: " + closest_neutral_robots[0].location);
 	}
 
 	private static void repair() throws GameActionException{
-		RobotInfo[] friends = Scanner.scan_for_friends_in_range();
-		if(friends!=null)
-			for(RobotInfo my_special_friend:friends)
-				if(my_special_friend.health < my_special_friend.maxHealth && my_special_friend.type != RobotType.ARCHON){
-					rc.repair(my_special_friend.location);
-					return;
-				}
+		RobotInfo friend_to_heal = Scanner.find_injured_friend_in_range();
+		
+		if(friend_to_heal == null)
+			return;
+		
+		rc.repair(friend_to_heal.location);
 	}
 }
 

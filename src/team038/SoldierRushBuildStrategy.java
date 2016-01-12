@@ -5,7 +5,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.RobotType;
 
 
-public class SoldierRushBuildStrategy extends Constructing  {
+public class SoldierRushBuildStrategy extends Construction  {
 	
 	static int scouts_built = 0;
 	

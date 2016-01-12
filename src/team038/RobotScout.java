@@ -1,29 +1,24 @@
 package team038;
 
-import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
-import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
 public class RobotScout extends AusefulClass {
 	
 	static final Direction[] scouting_directions = {Direction.NORTH, Direction.SOUTH,Direction.EAST,Direction.WEST,Direction.NORTH_EAST,Direction.SOUTH_WEST,Direction.NORTH_WEST,Direction.SOUTH_EAST};
-	static int turns_in_current_direction = 0;
 	static int scouting_direction = 0;
-	static final int max_scouting_direction_turns = 200;
+	static boolean outbound = true;
 	static boolean sensed_parts = false;
 			
 	public static void loop(RobotController robot_controller){
 		AusefulClass.init(robot_controller);
 		
-		NavSimpleMove.life_insurance_policy = Safety.AVOID_ALL_NON_FRIENDS;
+		NavSimpleMove.life_insurance_policy = Safety.GHOST;
 
-		Communications.find_closest_Archon();
-		destination = current_location;
+		scouting_direction = randomDirection().ordinal();
+		destination = current_location.add(scouting_directions[scouting_direction],2);
 				
 		while(true){
 			try{
@@ -36,51 +31,68 @@ public class RobotScout extends AusefulClass {
 	}
 
 	private static void turn() throws GameActionException {
-	//set up round
-		current_location = rc.getLocation();
+		//set up round
+		byte_code_limiter = RobotType.SCOUT.bytecodeLimit;
 		
-		if(rc.getHealth() > my_type.maxHealth*0.90)
-			NavSimpleMove.life_insurance_policy = Safety.GHOST;		
-		
-	//Read Comms
-		Communications.log_enemies();
-		Communications.find_closest_Archon();
-		
-	//Navigation, Find next Destination.
-		//head in direction n,s,e,w,ne,sw,nw,se depending on clock. 
-		turns_in_current_direction +=1;
-		if(turns_in_current_direction >= max_scouting_direction_turns){
-			turns_in_current_direction = 0;
-			scouting_direction = (scouting_direction+1)%8;
-		}
-		destination = location_of_archon.add(scouting_directions[scouting_direction],50);
-		
-		if(Scanner.can_see_targets()){
-			destination = Scanner.find_closest_hostile().location;
+		if(Scanner.can_see_hostiles()){
+			byte_code_limiter = 12000;
+			if(Scanner.hostiles_can_attack_me())
+				outbound = false;
 			
-			RobotInfo closest_hostile = Scanner.find_closest_hostile();
-			if(closest_hostile.location.distanceSquaredTo(current_location) <= closest_hostile.type.sensorRadiusSquared && closest_hostile.type != RobotType.ZOMBIEDEN)
-				destination = current_location.add(current_location.directionTo(closest_hostile.location).opposite(),5);
+			Communications.log_distress_call();
 		}
-		
-				
-		if(rc.getHealth() < my_type.maxHealth*0.66 || NavSimpleMove.life_insurance_policy == Safety.RETREAT){
+
+		if(outbound){
+			destination = location_of_archon.add(scouting_directions[scouting_direction],100);
+			if(!rc.onTheMap(current_location.add(scouting_directions[scouting_direction],5)))
+				outbound = false;	
+		} else{
+			destination = location_of_archon;
+			if(current_location.distanceSquaredTo(destination) < 4){
+				outbound = true;
+				//scouting_direction = (scouting_direction + 1)%8;
+				scouting_direction = randomDirection().ordinal();
+				burst_comms();
+			}
+		}
+								
+		if(rc.getHealth() < my_type.maxHealth*0.33 || NavSimpleMove.life_insurance_policy == Safety.RETREAT){
 			destination = location_of_archon;
 			NavSimpleMove.life_insurance_policy = Safety.RETREAT;
-		}
+		}	
 		
-		if(Scanner.can_see_turrets())
-			Communications.broadcast_turret_exclusion();
-		
-		System.out.println("Bytes left before nav: " + Clock.getBytecodesLeft());
 		NavSimpleMove.go_towards_destination();
 		
-		System.out.println("Bytes left after nav: " + Clock.getBytecodesLeft());
+		Communications.update_communications();
 		
-		sensed_parts = Scanner.sense_parts();
-		if(Scanner.cant_see_targets())
-			Communications.broadcast_parts();
+		if(rc.getHealth() > my_type.maxHealth*0.95)
+			NavSimpleMove.life_insurance_policy = Safety.GHOST;	
 		
-		System.out.println("Bytes left after parts comms: " + Clock.getBytecodesLeft());
+		Scanner.log_turrets();
+		
+		Communications.broadcast_known_exclusion();
+		
+		
+		if(Scanner.cant_see_hostiles())
+			Scanner.sense_parts();
+		
+		rc.setIndicatorString(0, "Heading: " + scouting_directions[scouting_direction].toString());
+	}
+	private static void burst_comms() throws GameActionException {
+		Communications.override_comms = true;
+		Communications.burst_neutral();
+		Communications.burst_parts();
+		Communications.broadcast_known_exclusion();
+		Communications.override_comms = false;
+	}
+
+	private static void Combat_micro() throws GameActionException {
+		//Can see hostiles.
+		//3 choices forward. still, back.
+		//limited to 2k bytes (for max eff)
+		if(Scanner.no_hostiles_can_attack_me())
+			return;
+		
+		destination = current_location.add(current_location.directionTo(Scanner.find_closest_hostile().location).opposite(),2);
 	}
 }
