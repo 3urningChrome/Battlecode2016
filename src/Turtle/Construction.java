@@ -1,4 +1,4 @@
-package EpsilonAlt;
+package Turtle;
 
 import battlecode.common.*;
 

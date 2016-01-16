@@ -1,4 +1,4 @@
-package EpsilonAlt;
+package Zeta;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,36 +15,17 @@ public class Scanner extends AusefulClass{
 	static RobotInfo[] neutrals_in_range;	
 	
 	static int round_last_scanned = -1;
+	static boolean can_see_turrets= false;
 	
 	public static ArrayList<MapLocation> parts_locations = new ArrayList<MapLocation>();	
 	static int last_scanned_for_parts = 1;
 	
-	
-/**
-scan_for_hostiles()
-scan_for_hostiles_in_range()
-find_closest_hostile()
-can_see_hostiles()
-cant_see_hostiles()
-
-says_no_targets_are_in_range()
-says_there_are_targets_in_range()
-
-scan_for_friends()
-scan_for_friends_in_range
-find_closest_friend()
-find_injured_friend_in_range
-
-scan_for_neutrals()
-find_closest_neutral()
-scan_for_neutrals_in_range()
-
-scan_for_parts();
-*/
+	public static ArrayList<MapLocation> exclusion_squares = new ArrayList<MapLocation>();
 	
 	private static void update_scan_information() {
 		if(!rc.getLocation().equals(current_location) || round_last_scanned < rc.getRoundNum()){
 			current_location = rc.getLocation();
+			round_last_scanned = rc.getRoundNum();
 			switch(my_type){
 			case ARCHON:
 				nearby_hostiles = rc.senseHostileRobots(current_location, my_type.sensorRadiusSquared);
@@ -54,15 +35,19 @@ scan_for_parts();
 				neutrals_in_range = rc.senseNearbyRobots(2, neutral);
 				if(parts_locations.contains(current_location))
 					parts_locations.remove(current_location);
+				
+				hostiles_in_range = rc.senseHostileRobots(current_location, RobotType.SOLDIER.attackRadiusSquared);
+				break;
 			case SCOUT:
 				nearby_hostiles = rc.senseHostileRobots(current_location, my_type.sensorRadiusSquared);
 				nearby_neutrals = rc.senseNearbyRobots(my_type.sensorRadiusSquared, neutral);
 				neutrals_in_range = rc.senseNearbyRobots(2, neutral);
+				hostiles_in_range = rc.senseHostileRobots(current_location, RobotType.SOLDIER.attackRadiusSquared);
 				
 				for(RobotInfo neutral_info:neutrals_in_range)
 					if(!Communications.neutral_zones.contains(neutral_info.location))
 						Communications.neutral_zones.add(neutral_info.location);
-				
+				break;
 			default:
 				nearby_hostiles = rc.senseHostileRobots(current_location, my_type.sensorRadiusSquared);
 				hostiles_in_range = rc.senseHostileRobots(current_location, my_type.attackRadiusSquared);
@@ -159,7 +144,7 @@ scan_for_parts();
 	}	
 	
 	public static void sense_parts() {				
-//TODO should be clever here, and only scan new tiles... 
+//should be clever here, and only scan new tiles...  - done, thanks to sensePartLocations now available
 		if(last_scanned_for_parts > rc.getRoundNum() - 10)
 			return;
 		
@@ -202,8 +187,9 @@ scan_for_parts();
 	}
 
 	public static boolean hostiles_cant_see_location(MapLocation location) {
+		//problem. zombies can see everywhere. but I think sensor radius set to something small? 0 maybe? nope. -1. that's poop.
 		for(RobotInfo nearby_hostile:nearby_hostiles){
-			if(location.distanceSquaredTo(nearby_hostile.location) <= nearby_hostile.type.sensorRadiusSquared)
+			if(location.distanceSquaredTo(nearby_hostile.location) <= Math.max(24, nearby_hostile.type.sensorRadiusSquared))
 				return false;
 		}
 		return true;
@@ -214,14 +200,22 @@ scan_for_parts();
 	}
 	
 	public static void log_turrets(){
+		can_see_turrets = false;
 		scan_for_hostiles();
 		for(RobotInfo near_enemy:nearby_hostiles){
+			if(Clock.getBytecodeNum() > byte_code_limiter - 300 )
+				return;
 			if(near_enemy.type == RobotType.TURRET){
 				rc.setIndicatorString(2,"Seen Turret: " + near_enemy.location);
 				if(!Communications.exclusion_zones.contains(near_enemy.location))
 					Communications.exclusion_zones.add(near_enemy.location);
+				can_see_turrets = true;
 			}
 		}
 		return;
 	}	
+	
+	public static boolean can_see_turrets(){
+		return can_see_turrets;
+	}
 }

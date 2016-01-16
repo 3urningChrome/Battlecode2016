@@ -1,4 +1,4 @@
-package SprintEntry;
+package Zeta;
 
 import java.util.Iterator;
 import battlecode.common.*;
@@ -7,6 +7,22 @@ import battlecode.common.*;
 public enum Safety {
 	NONE{
 
+	},
+	CHARGE{
+	},
+	MASS_FOR_CHARGE{
+		public boolean says_this_move_will_shorten_your_life(MapLocation location) throws GameActionException{
+			if(stepping_into_exclusion_zone(location))
+				return true;
+			return false;
+		}
+	},
+	EXPLORING{
+		public boolean says_this_move_will_shorten_your_life(MapLocation location) throws GameActionException{
+			if(stepping_into_exclusion_zone(location))
+				return true;
+			return false;
+		}
 	},
 	KITE{
 //stepping into out of fire zones if can win.
@@ -74,8 +90,8 @@ public enum Safety {
 			};
 	
 	public boolean stepping_into_exclusion_zone(MapLocation location){
-		if(Scanner.can_see_turrets())
-			return false; //too late may as well see if can get to safety
+//		if(Scanner.can_see_turrets())
+//			return false; //too late may as well see if can get to safety
 		
 		int distance = RobotType.TURRET.attackRadiusSquared;
 		if(AusefulClass.my_type == RobotType.ARCHON)

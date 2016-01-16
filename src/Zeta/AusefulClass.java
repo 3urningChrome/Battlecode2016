@@ -1,4 +1,4 @@
-package team038;
+package Zeta;
 
 import battlecode.common.*;
 

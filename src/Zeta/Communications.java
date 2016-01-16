@@ -1,4 +1,4 @@
-package EpsilonAlt;
+package Zeta;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,7 +33,7 @@ public class Communications extends AusefulClass{
 		
 	
 	public static void update_communications(){
-		if(Clock.getBytecodeNum() > byte_code_limiter - 2000)
+		if(Clock.getBytecodeNum() > byte_code_limiter - 500)
 			return;		
 		if(rc.getRoundNum() <= round_message_queue_updated)
 			return;
@@ -54,7 +54,7 @@ public class Communications extends AusefulClass{
 				
 		for(Signal current_message:message_queue){
 			MapLocation message_location = current_message.getLocation();
-			if(Clock.getBytecodeNum() > byte_code_limiter - 4000)
+			if(Clock.getBytecodeNum() > byte_code_limiter - 200)
 				return;
 			if(current_message.getTeam() == enemy){
 				if(my_type == RobotType.TURRET){
@@ -120,8 +120,27 @@ public class Communications extends AusefulClass{
 	}
 	
 	public static void death_shout() throws GameActionException{
-		rc.broadcastSignal(70);
-		rc.setIndicatorString(2,"Death Shout");
+//		rc.broadcastSignal(5000);
+//		rc.setIndicatorString(2,"Death Shout");
+		
+		if(my_type == RobotType.SCOUT || my_type == RobotType.ARCHON){
+			if(!exclusion_zones.isEmpty()){
+				for (Iterator<MapLocation> test = Communications.exclusion_zones.iterator(); test.hasNext();){
+					if(Clock.getBytecodeNum() > byte_code_limiter - 500)
+						return;
+					MapLocation exclusion_location = test.next();
+					if(rc.canSenseLocation(exclusion_location)){
+						RobotInfo check_exclusion = rc.senseRobotAtLocation(exclusion_location);
+						if(check_exclusion==null || check_exclusion.type!=RobotType.TURRET){
+							broadcast_message(Exclustion_Zone_Remove_Data, convert_MapLocation_to_integer(exclusion_location),5000);
+							test.remove();
+							continue;
+						}
+					}
+					broadcast_message(Exclustion_Zone_Location_Data, convert_MapLocation_to_integer(exclusion_location), 5000);
+				}
+			}			
+		}
 	}
 	
 	public static void broadcast_my_position() throws GameActionException{

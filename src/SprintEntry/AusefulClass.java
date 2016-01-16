@@ -50,7 +50,7 @@ public class AusefulClass {
 		//rc.setIndicatorLine(current_location, destination, 120, 120, 120);
 		
 		if(my_type == RobotType.ARCHON)
-			rc.setIndicatorString(0,"Version: Sprint Entry 1.0");
+			rc.setIndicatorString(0,"Version: Sprint Entry 1.2");
 		
 		Clock.yield();
 		

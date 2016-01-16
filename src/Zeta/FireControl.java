@@ -1,4 +1,4 @@
-package EpsilonAlt;
+package Zeta;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,6 +19,21 @@ public class FireControl extends AusefulClass{
 		rc.attackLocation(target.location);
 		return true;
 	}
+	
+	public static void attack_Archon() throws GameActionException {
+		if (i_cannot_fire())
+			return;
+		
+		if(Scanner.says_no_targets_are_in_range())
+			return;
+		
+		for(RobotInfo possible_target:Scanner.hostiles_in_range){
+			if(possible_target.type == RobotType.ARCHON){
+				if (attack_location(possible_target.location))
+					return;
+			}
+		}
+	}	
 	
 	public static boolean attack_location(MapLocation location) throws GameActionException{
 		if (i_cannot_fire())
@@ -137,5 +152,5 @@ public class FireControl extends AusefulClass{
 					return;
 		}
 		return;
-	}		
+	}	
 }

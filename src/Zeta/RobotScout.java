@@ -1,12 +1,8 @@
-package EpsilonAlt;
+package Zeta;
 
-import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
-import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
 public class RobotScout extends AusefulClass {
@@ -45,6 +41,10 @@ public class RobotScout extends AusefulClass {
 			
 			Communications.log_distress_call();
 		}
+		
+		if(rc.getRoundNum() > 2100){
+			Communications.death_shout();
+		}
 
 		if(outbound){
 			destination = location_of_archon.add(scouting_directions[scouting_direction],100);
@@ -54,7 +54,8 @@ public class RobotScout extends AusefulClass {
 			destination = location_of_archon;
 			if(current_location.distanceSquaredTo(destination) < 4){
 				outbound = true;
-				scouting_direction = (scouting_direction + 1)%8;
+				//scouting_direction = (scouting_direction + 1)%8;
+				scouting_direction = randomDirection().ordinal();
 				burst_comms();
 			}
 		}

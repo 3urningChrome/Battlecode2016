@@ -1,4 +1,4 @@
-package SprintEntry;
+package Zeta;
 
 import battlecode.common.*;
 
@@ -20,6 +20,11 @@ public class NavSimpleMove extends AusefulClass {
 			dig(destination);
 			return;
 		}
+		
+		combat_mode = false;
+		
+		if(life_insurance_policy == Safety.KITE)
+			combat_mode = true;
 
 //TODO alter try directions so we use non-diagonal if possible.	
 		Direction direction_to_head = current_location.directionTo(destination);

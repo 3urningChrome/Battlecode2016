@@ -1,24 +1,23 @@
-package EpsilonAlt;
+package Zeta;
 
-import java.util.Iterator;
-
-import battlecode.common.Clock;
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
-public class RobotSoldier extends AusefulClass {
+public class RobotDefault extends AusefulClass {
 			
+	static int my_previous_health;
 	public static void loop(RobotController robot_controller){
 		AusefulClass.init(robot_controller);
 		
 		NavSimpleMove.life_insurance_policy = Safety.KITE;
+		my_previous_health = (int) my_type.maxHealth;
 
 		Communications.update_communications();
 		destination = current_location;
+		
 				
 		while(true){
 			try{
@@ -32,7 +31,7 @@ public class RobotSoldier extends AusefulClass {
 
 	private static void turn() throws GameActionException {
 	//set up round
-		byte_code_limiter = RobotType.SOLDIER.bytecodeLimit;
+		byte_code_limiter = my_type.bytecodeLimit;
 		
 		if(Scanner.can_see_hostiles()){
 			byte_code_limiter = 2000;
@@ -41,7 +40,9 @@ public class RobotSoldier extends AusefulClass {
 			Combat_micro(); //sets destination
 			NavSimpleMove.go_towards_destination();
 			FireControl.shoot_deadest_enemy();
+			Scanner.log_turrets();
 			Communications.log_distress_call();
+			my_previous_health = (int) rc.getHealth();
 		} else{
 			NavSimpleMove.combat_mode = false;
 			RobotInfo closest_friend = Scanner.find_closest_friend();
@@ -62,7 +63,16 @@ public class RobotSoldier extends AusefulClass {
 						
 				if(Communications.distress_zones.contains(closest_Comms_data))
 					Communications.distress_zones.remove(closest_Comms_data);
-			}		
+			}	
+						
+			if(my_previous_health != (int) rc.getHealth()){
+				 NavSimpleMove.life_insurance_policy = Safety.RETREAT;
+				 my_previous_health = (int) rc.getHealth();
+				 if(!Scanner.exclusion_squares.contains(current_location))
+					 Scanner.exclusion_squares.add(current_location);
+				 
+				 my_previous_health = (int) rc.getHealth();
+			}
 				
 			if(rc.getHealth() < my_type.maxHealth*0.33 || NavSimpleMove.life_insurance_policy == Safety.RETREAT){
 				destination = location_of_archon;
@@ -73,7 +83,15 @@ public class RobotSoldier extends AusefulClass {
 					if(current_location.isAdjacentTo(location_of_archon))
 						destination = current_location.add(location_of_archon.directionTo(current_location));
 				}
-			}				
+			}	
+			
+			if(rc.getRoundNum() > 2800){
+				if(!Communications.exclusion_zones.isEmpty())
+					destination = Utilities.find_closest_MapLocation(Communications.exclusion_zones);
+				if(rc.getRoundNum() > 2900){
+					NavSimpleMove.life_insurance_policy = Safety.NONE;
+				}
+			}
 			NavSimpleMove.go_towards_destination();
 		}
 		
@@ -102,6 +120,15 @@ public class RobotSoldier extends AusefulClass {
 		//3 choices forward. still, back.
 		//limited to 2k bytes (for max eff)
 		
+		if(NavSimpleMove.life_insurance_policy == Safety.NONE){
+			RobotInfo closest_hostile = Scanner.find_closest_hostile(); //last ditch effort to close range.
+			if(closest_hostile != null){
+				destination = closest_hostile.location;
+				if(destination.isAdjacentTo(current_location))
+					destination = current_location;
+			}
+			FireControl.attack_Archon();			
+		}
 		//if only 1 seen, and win 1v1 then advance
 		if(Scanner.nearby_hostiles.length == 1){
 			if(FireControl.i_will_win_1v1(Scanner.nearby_hostiles[0],Scanner.says_no_targets_are_in_range())){ //win if I advance

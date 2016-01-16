@@ -1,8 +1,5 @@
-package EpsilonAlt;
+package Zeta;
 
-import scala.reflect.runtime.ThreadLocalStorage.MyThreadLocalStorage;
-import battlecode.common.Clock;
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
@@ -17,6 +14,12 @@ public class RobotTurret extends AusefulClass {
 		AusefulClass.init(robot_controller);
 		
 		NavSimpleMove.life_insurance_policy = Safety.KITE;
+		
+		if(my_type == RobotType.TTM){
+			//neutral i guess.
+			my_type = RobotType.TURRET;
+			i_am_turret = false;
+		}
 						
 		while(true){
 			try{

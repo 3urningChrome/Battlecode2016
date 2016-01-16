@@ -1,11 +1,11 @@
-package EpsilonAlt;
+package Zeta;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotType;
 
 
-public class SoldierRushWithSomeTurret extends Construction  {
+public class SoldierRushBuildStrategy extends Construction  {
 	
 	static int scouts_built = 0;
 	static int soldiers_built = 0;
@@ -22,10 +22,11 @@ public class SoldierRushWithSomeTurret extends Construction  {
 		
 		if(scouts_built > 1)
 			build_type = RobotType.SOLDIER;
-		if(soldiers_built > 25)
-			build_type = RobotType.TURRET;
-		if(turrets_built > 3)
-			build_type = RobotType.SOLDIER;
+		
+		if(soldiers_built > 40){
+			RobotType[] buildList = new RobotType[]{RobotType.SOLDIER, RobotType.SOLDIER, RobotType.GUARD};
+			build_type = buildList[rnd.nextInt(buildList.length)];
+		}
 		
 		if(i_cannot_build(build_direction, build_type))
 			return false;
@@ -41,3 +42,4 @@ public class SoldierRushWithSomeTurret extends Construction  {
 		return true;
 	}
 }
+

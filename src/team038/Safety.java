@@ -77,10 +77,16 @@ public enum Safety {
 		if(Scanner.can_see_turrets())
 			return false; //too late may as well see if can get to safety
 		
+		int distance = RobotType.TURRET.attackRadiusSquared;
+		if(AusefulClass.my_type == RobotType.ARCHON)
+			distance = distance *2;
+		
 		if(!Communications.exclusion_zones.isEmpty())
 			for (Iterator<MapLocation> test = Communications.exclusion_zones.iterator(); test.hasNext();){
 				MapLocation exclusion_test = test.next();
-				if(location.distanceSquaredTo(exclusion_test) <= RobotType.TURRET.attackRadiusSquared){
+
+				
+				if(location.distanceSquaredTo(exclusion_test) <= distance){
 					if(exclusion_test.distanceSquaredTo(AusefulClass.current_location) >= exclusion_test.distanceSquaredTo(location))
 					AusefulClass.rc.setIndicatorString(2, "Exclusion: " + Clock.getBytecodesLeft());
 					return true;

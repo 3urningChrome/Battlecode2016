@@ -1,4 +1,4 @@
-package EpsilonAlt;
+package Turtle;
 
 import battlecode.common.*;
 
@@ -16,11 +16,11 @@ public class NavSimpleMove extends AusefulClass {
 		if(!rc.isCoreReady())
 			return;
 		
-		if(destination==null)
+		if(destination==null || destination.equals(current_location)){
+			dig(destination);
 			return;
-		
-		if(destination.equals(current_location))
-			return;
+		}
+
 //TODO alter try directions so we use non-diagonal if possible.	
 		Direction direction_to_head = current_location.directionTo(destination);
 		for(int offset:(combat_mode? combat_directions : try_directions)){
@@ -36,16 +36,46 @@ public class NavSimpleMove extends AusefulClass {
 				}
 				return;
 			}
-		}	
+		}
+		dig(destination);
+	}
+	
+	public static void head_directly_towards_destination() throws GameActionException{
+		if(!rc.isCoreReady())
+			return;
 		
-		if(Scanner.says_there_are_targets_in_range())
+		if(destination==null || destination.equals(current_location)){
+			dig(destination);
+			return;
+		}
+		
+		Direction direction_to_head = current_location.directionTo(destination);
+		if(rc.canMove(direction_to_head))
+			rc.move(direction_to_head);
+		dig(destination);
+	}
+	
+	public static void dig(MapLocation initial_dig_location) throws GameActionException{
+		if(Scanner.says_there_are_targets_in_range() && my_type.canAttack())
 			return;
 		
 		if(my_type == RobotType.TURRET)
 			return;
+	
+		if(!rc.isCoreReady())
+			return;
+		
+		Direction initial_dig_direction;
+		if(initial_dig_location == null || initial_dig_location == current_location){
+			initial_dig_direction = Direction.NORTH;
+		} else{
+			initial_dig_direction = current_location.directionTo(initial_dig_location);
+		}
 		
 		for(int offset:dig_directions){
-			Direction try_to_clear = Direction.values()[(direction_to_head.ordinal() + offset + 8)%8];
+			if(Clock.getBytecodeNum() > byte_code_limiter - 300 )
+				return;			
+			Direction try_to_clear = Direction.values()[(initial_dig_direction.ordinal() + offset + 8)%8];
 			if(rc.senseRubble(current_location.add(try_to_clear)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH){
 				rc.clearRubble(try_to_clear);
 				return;

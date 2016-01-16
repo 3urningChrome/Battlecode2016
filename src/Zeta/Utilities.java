@@ -1,4 +1,4 @@
-package EpsilonAlt;
+package Zeta;
 
 import java.util.ArrayList;
 import java.util.Iterator;

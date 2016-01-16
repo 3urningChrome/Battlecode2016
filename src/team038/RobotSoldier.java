@@ -87,13 +87,13 @@ public class RobotSoldier extends AusefulClass {
 				}
 			}	
 			
-			if(rc.getRoundNum() > 2800){
-				if(!Communications.exclusion_zones.isEmpty())
-					destination = Utilities.find_closest_MapLocation(Communications.exclusion_zones);
-				if(rc.getRoundNum() > 2900){
-					NavSimpleMove.life_insurance_policy = Safety.NONE;
-				}
-			}
+//			if(rc.getRoundNum() > 2800){
+//				if(!Communications.exclusion_zones.isEmpty())
+//					destination = Utilities.find_closest_MapLocation(Communications.exclusion_zones);
+//				if(rc.getRoundNum() > 2900){
+//					NavSimpleMove.life_insurance_policy = Safety.NONE;
+//				}
+//			}
 			NavSimpleMove.go_towards_destination();
 		}
 		

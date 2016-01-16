@@ -1,0 +1,19 @@
+Soldier Build - Good vs weak Z's and guards. Also good for finding Zombie bases
+Guard Build - Good def vs Zombies and def/atk vs Turrets
+Turtle - Good for avoiding attention.
+
+how to decide on strategy:
+Game start:
+Map           open                          closed
+Z-Time        early                         late
+Z_spawns      few           medium          high
+z strength    low           medium          high
+
+Game end:
+#Archons      him                           me
+Archon HP     him                           me
+Parts         him                           me
+Zombie bases  Low           medium          High
+
+
+

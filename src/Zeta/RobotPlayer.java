@@ -1,6 +1,5 @@
-package EpsilonAlt;
+package Zeta;
 
-import battlecode.common.Clock;
 import battlecode.common.RobotController;
 
 public class RobotPlayer {
@@ -11,15 +10,22 @@ public class RobotPlayer {
 			break;
 		case SOLDIER:
 			RobotSoldier.loop(rc);
+			break;
+		case GUARD:
+			RobotGuard.loop(rc);
+			break;
 		case SCOUT:
 			RobotScout.loop(rc);	
+			break;
 		case TURRET:
-			RobotTurret.loop(rc);				
+			RobotTurret.loop(rc);	
+			break;
+		case TTM:
+			RobotTurret.loop(rc);
+			break;
 		default:
 			System.out.println("Unknown robot spawned");
-			while(true){
-				Clock.yield();
-			}
+			RobotDefault.loop(rc);
 		}
 	}
 }

@@ -1,14 +1,9 @@
-package EpsilonAlt;
+package Zeta;
 
-import java.util.Iterator;
-
-import battlecode.common.Clock;
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotType;
 
 public class RobotArchon extends AusefulClass {
 	
@@ -17,9 +12,9 @@ public class RobotArchon extends AusefulClass {
 	public static void loop(RobotController robot_controller){
 		AusefulClass.init(robot_controller);
 				
-		the_plan = BuildStrategy.SOLDIER_TURRET;
-		//the_plan = BuildStrategy.SOLDIER_RUSH;
-		NavSimpleMove.life_insurance_policy = Safety.GHOST;
+		//the_plan = BuildStrategy.SOLDIER_TURRET;
+		the_plan = BuildStrategy.SOLDIER_RUSH;
+		NavSimpleMove.life_insurance_policy = Safety.ARCHON;
 		
 		while(true){
 			try{
@@ -54,7 +49,10 @@ public class RobotArchon extends AusefulClass {
 				if(rc.canSenseLocation(destination))
 					if(rc.senseParts(destination) < 1)
 						Scanner.parts_locations.remove(destination);
-			}			
+			}	
+			if(rc.getRoundNum() > 2100){
+				Communications.death_shout();
+			}
 		}
 		Communications.update_communications();
 		NavSimpleMove.go_towards_destination();
